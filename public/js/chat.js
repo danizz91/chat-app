@@ -43,6 +43,7 @@ socket.on('message',(msg)=>{
     const html = Mustache.render(messageTemplate,{
         username: msg.username,
         message: msg.text,
+        updateStatus: msg.updateStatus,
         createdAt: moment(msg.createdAt).format('k:mm')
     });
     $messages.insertAdjacentHTML('beforeend',html)
@@ -74,8 +75,12 @@ $messageForm.addEventListener('submit',(e)=>{
     $messageFormButton.setAttribute('disabled','disabled')
 
     const message = e.target.elements.message.value
+    const data = {
+        message,
+        updateStatus: 0
+    }
 
-    socket.emit('sendMessage',message,(error)=>{
+    socket.emit('sendMessage',data,(error)=>{
         $messageFormButton.removeAttribute('disabled')
         $messageFormInput.value = ''
         $messageFormInput.focus()
@@ -83,6 +88,7 @@ $messageForm.addEventListener('submit',(e)=>{
         if(error){
             return console.log(error)
         }
+        data.updateStatus = 1;
         console.log('Message delivered!')
     })
 })

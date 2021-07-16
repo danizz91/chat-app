@@ -30,8 +30,12 @@
             <span class="message__name">{{username}}</span>
             <span class="message__meta">{{createdAt}}</span>
         </p>
-        <p>
+        <p class="message-text">
             {{message}}
+
+        <div class="ustatus ustatus-{{updateStatus}}"></div>
+
+        <div style="clear: both;height: 15px"></div>
         </p>
     </div>
 </script>
@@ -52,13 +56,15 @@
     <h3 class="list-title">Users</h3>
     <ul class="users">
         {{#users}}
-            <li>{{username}}</li>
+        <li>{{username}}</li>
         {{/users}}
     </ul>
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/3.0.1/mustache.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.6.0/qs.min.js"></script>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css"
+      integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous">
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/chat.js"></script>
 </body>

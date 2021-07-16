@@ -1,7 +1,8 @@
-const generateMessage = (username,text) =>{
+const generateMessage =  (username,text,updateStatus=1) =>{
     return{
         username,
         text,
+        updateStatus,
         createdAt: new Date().getTime()
     }
 }

@@ -1,5 +1,33 @@
 /* General Styles */
 
+
+.ustatus{display: none}
+.ustatus.ustatus-1{
+
+    display: block;
+    content: '&#x2714;';
+
+}
+
+.ustatus.ustatus-2{
+
+    display: block;
+    content: 'Vv';
+
+
+}
+
+
+.ustatus.ustatus-3{
+
+    display: block;
+    content: 'vV';
+    color: blue;
+
+}
+
+
+
 * {
     margin: 0;
     padding: 0;
@@ -61,7 +89,7 @@ button:disabled {
 .centered-form {
     background: #333744;
     width: 100vw;
-    height: 100vh;   
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -115,7 +143,7 @@ button:disabled {
 /* Message Styles */
 
 .message {
-    margin-bottom: 16px;   
+    margin-bottom: 16px;
 }
 
 .message__name {
@@ -166,7 +194,7 @@ button:disabled {
     font-weight: 400;
     font-size: 22px;
     background: #2c2f3a;
-    padding: 24px;   
+    padding: 24px;
 }
 
 .list-title {

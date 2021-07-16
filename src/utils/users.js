@@ -1,7 +1,14 @@
-const users = []
+const redis = require('redis');
+const { promisifyAll } = require('bluebird');
 
-const addUser = ({id,username,room}) =>{
-    // Clean the data
+promisifyAll(redis);
+const client = redis.createClient();
+
+const toJSON = (obj) =>{
+    return JSON.parse(obj)
+}
+
+const addUser = async ({id,username,room}) =>{
     username = username.trim().toLowerCase()
     room = room.trim().toLowerCase()
 
@@ -11,49 +18,62 @@ const addUser = ({id,username,room}) =>{
             error:'Username and room are required!'
         }
     }
+    try{
+        const redislist = await client.lrangeAsync('Users',0,-1)
+        const userlist = redislist.map(toJSON);
+        // Check for exisitin user
+        const exisitingUser = userlist.find((user)=>{
+            return user.room === room && user.username === username
+        })
+        // Validate username
+        if(exisitingUser){
+            return {
+                error: 'Username is in use!'
+            }
+        }
+        // Store user
+        const user = {id,username,room}
+        await client.lpushAsync('Users',JSON.stringify(user))
+        return {user}
 
-    // Check for exisitin user
-    const exisitingUser = users.find((user)=>{
-        return user.room === room && user.username === username
-    })
-
-    // Validate username
-    if(exisitingUser){
+    }catch (e){
         return {
-            error: 'Username is in use!'
+            error:e
         }
     }
 
-    // Store user
-    const user = {id,username,room}
-    users.push(user)
-    return {user}
 }
 
-const removeUser = (id) =>{
-    const index = users.findIndex((user)=>{
-        return user.id === id
-    })
-    if(index !== -1){
-        return users.splice(index,1)[0]
-    }
-
-}
-
-const getUser = (id)=>{
-    const user = users.find((user)=>{
+const getUser = async (id) =>{
+    const redisList = await client.lrangeAsync('Users',0,-1);
+    const userList = redisList.map(toJSON);
+    const user = userList.find((user)=>{
         return user.id === id
     })
     return user
 }
 
-const getUsersInRoom = (room) =>{
+const removeUser = async (id) =>{
+    const redisList = await client.lrangeAsync('Users',0,-1);
+    const userList = redisList.map(toJSON);
+    const index = userList.findIndex((user)=>{
+        return user.id === id
+    })
+    if(index !== -1){
+        await client.lremAsync('Users',-1,id)
+    }
+}
+
+const getUsersInRoom = async (room) =>{
     room = room.trim().toLowerCase()
-    const sameRoom = users.filter((user)=>{
+    const redisList = await client.lrangeAsync('Users',0,-1);
+    const userList = redisList.map(toJSON);
+    const sameRoom = userList.filter((user)=>{
         return user.room === room
     })
     return sameRoom
 }
+
 
 module.exports = {
     addUser,

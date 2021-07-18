@@ -56,12 +56,16 @@ const getUser = async (id) =>{
 const removeUser = async (id) =>{
     const redisList = await client.lrangeAsync('Users',0,-1);
     const userList = redisList.map(toJSON);
-    const index = userList.findIndex((user)=>{
+    const user = userList.find((user)=>{
         return user.id === id
     })
-    if(index !== -1){
-        await client.lremAsync('Users',-1,id)
+    if (!user) {
+        return {
+            error: "Cannot find that user!"
+        }
     }
+    const stringUser = JSON.stringify(user)
+    await client.lremAsync('Users',1,stringUser)
 }
 
 const getUsersInRoom = async (room) =>{

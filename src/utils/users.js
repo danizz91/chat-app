@@ -70,13 +70,11 @@ const getUser = async (id) =>{
 
 const removeUser = async (id) =>{
     try{
-        const user = await client.getAsync(`User:${id}`);
-        if(!user){
+        const user = await client.delAsync(`User:${id}`);
+        if(user < 0){
             return {
                 error: "Cannot find that user!"
             }
-        }else {
-            await client.delAsync(`User:${id}`);
         }
     }catch (e){
         return {

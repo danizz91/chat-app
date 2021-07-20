@@ -1,10 +1,26 @@
 version: "3.4"
 services:
-  nodejs:
+  chat-app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nodejs
+    image: danielzz91/chat-app2
+    ports:
+      - "3000:3000"
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - dev-network
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
+    networks:
+      - dev-network
   redis:
     container_name: redis-container
     image: "redis:latest"
@@ -12,3 +28,8 @@ services:
       - "6379:6379"
     volumes:
       - ./data:/data
+    networks:
+      - dev-network
+
+networks:
+  dev-network:

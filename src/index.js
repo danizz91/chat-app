@@ -5,6 +5,8 @@ const socketio = require('socket.io');
 const Filter = require('bad-words');
 const {generateMessage,generateLocationMessage} = require('./utils/messages')
 const {addUser,removeUser,getUser,getUsersInRoom} = require("./utils/users")
+const {createMessage,getAllMessage} = require('./utils/room');
+const {writeLog} = require('./utils/generateLog');
 
 const app = express();
 app.use(express.json());
@@ -19,10 +21,11 @@ const publicDirectoryPath = path.join(__dirname,'../public');
 
 app.use(express.static(publicDirectoryPath));
 
+// Write log every 1 minute!
+
 
 io.on('connection',(socket)=>{
     console.log('New WebSocket connection');
-
 
     socket.on('join',async ({username,room},callback)=>{
         try{
@@ -30,10 +33,16 @@ io.on('connection',(socket)=>{
             if(error){
                 return callback(error)
             }
-            console.log(user)
             socket.join(user.room)
+            const previousMessages = await getAllMessage(user.room)
+            previousMessages.forEach((message)=>{
+                socket.emit('message',generateMessage(message.username,message.text))
+            })
             socket.emit('message',generateMessage("Admin",'Welcome!'))
-            socket.broadcast.to(user.room).emit('message',generateMessage(user.username,`has joined!`))
+            const message = generateMessage(user.username,`has joined!`)
+            socket.broadcast.to(user.room).emit('message',message)
+            await createMessage(user.id,message,user.room)
+            await writeLog()
             io.to(user.room).emit('roomData',{
                 room: user.room,
                 users: await getUsersInRoom(user.room)
@@ -53,7 +62,9 @@ io.on('connection',(socket)=>{
             if(usersInRoom.length > 1){
                 data.updateStatus = 3
             }
-            io.to(user.room).emit('message',generateMessage(user.username,data.message,data.updateStatus))
+            const message = generateMessage(user.username,data.message,data.updateStatus)
+            io.to(user.room).emit('message',message)
+            await createMessage(user.id,message,user.room)
 
         }catch (e){
             return e
@@ -75,12 +86,16 @@ io.on('connection',(socket)=>{
         }
     })
 
+
+
     socket.on('disconnect',async ()=>{
         try{
             const user = await getUser(socket.id)
             await removeUser(socket.id)
             if(user){
-                io.to(user.room).emit('message',generateMessage("Admin",`${user.username} has left!`))
+                const message = generateMessage("Admin",`${user.username} has left!`)
+                io.to(user.room).emit('message',message)
+                await createMessage(user.id,message,user.room)
                 io.to(user.room).emit('roomData',{
                     room: user.room,
                     users: await getUsersInRoom(user.room)

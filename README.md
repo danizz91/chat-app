@@ -11,8 +11,7 @@ Using Technology : Nodejs,Redis,Rabbitmq
 $ docker-compose up
 ```
 go to localhost:3000 at your broswer
-Choose nickname and room
-start chatting!
+Choose nickname and room and start chatting!
 ## 
 ## Get logs
 To get the logs of the application that came from rabbitmq use that command:

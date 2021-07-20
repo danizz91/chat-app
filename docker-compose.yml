@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: danielzz91/chat-app2
+    image: danielzz91/chat-app
     ports:
       - "3000:3000"
     depends_on:

@@ -6,7 +6,7 @@ Using Technology : Nodejs,Redis,Rabbitmq
 
 ## Building and Running the Application
 To start the application run the command : 
-# docker-compose up
+$ docker-compose up
 go to localhost:3000 at your broswer
 Choose nickname and room
 start chatting!

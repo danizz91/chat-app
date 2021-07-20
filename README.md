@@ -5,6 +5,7 @@ Chat Application!
 Using Technology : Nodejs,Redis,Rabbitmq
 
 ## Building and Running the Application
+clone or download that repository.
 To start the application run the command : 
 ```bash
 $ docker-compose up

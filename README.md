@@ -1,6 +1,6 @@
 # chat-app
 ## Description
-Chat Application!
+A Chat Application!
 
 Using Technology : Nodejs,Redis,Rabbitmq
 

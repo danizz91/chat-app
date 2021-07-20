@@ -2,40 +2,58 @@ const redis = require('redis');
 const { promisifyAll } = require('bluebird');
 
 promisifyAll(redis);
-const client = redis.createClient();
+const client = redis.createClient({
+    port      : 6379,
+    host      : 'redis'
+});
 
 const toJSON = (obj) =>{
     return JSON.parse(obj)
 }
 
-const addUser = async ({id,username,room}) =>{
+const getValueOfKeys = async (users) =>{
+    const usersJSON = []
+    for (let i = 0 ; i < users.length ; i++){
+        const valueUser = await client.GETAsync(users[i])
+        usersJSON.push(JSON.parse(valueUser))
+    }
+    return usersJSON
+}
+
+
+
+const addUser = async ({id,username,room}) => {
     username = username.trim().toLowerCase()
     room = room.trim().toLowerCase()
 
     // Validate the data
-    if(!username || !room){
+    if (!username || !room) {
         return {
-            error:'Username and room are required!'
+            error: 'Username and room are required!'
         }
     }
+
     try{
-        const redislist = await client.lrangeAsync('Users',0,-1)
-        const userlist = redislist.map(toJSON);
-        // Check for exisitin user
-        const exisitingUser = userlist.find((user)=>{
+        const users = await client.KEYSAsync('*')
+        const valueList = await getValueOfKeys(users)
+
+
+        const exisitingUser = valueList.find((user)=>{
             return user.room === room && user.username === username
         })
+
         // Validate username
         if(exisitingUser){
             return {
                 error: 'Username is in use!'
             }
         }
+
+
         // Store user
         const user = {id,username,room}
-        await client.lpushAsync('Users',JSON.stringify(user))
+        await client.setAsync(`User:${id}`,JSON.stringify(user))
         return {user}
-
     }catch (e){
         return {
             error:e
@@ -45,35 +63,48 @@ const addUser = async ({id,username,room}) =>{
 }
 
 const getUser = async (id) =>{
-    const redisList = await client.lrangeAsync('Users',0,-1);
-    const userList = redisList.map(toJSON);
-    const user = userList.find((user)=>{
-        return user.id === id
-    })
-    return user
-}
-
-const removeUser = async (id) =>{
-    const redisList = await client.lrangeAsync('Users',0,-1);
-    const userList = redisList.map(toJSON);
-    const index = userList.findIndex((user)=>{
-        return user.id === id
-    })
-    if(index !== -1){
-        await client.lremAsync('Users',-1,id)
+    try{
+        const user = await client.getAsync(`User:${id}`);
+        return JSON.parse(user)
+    }catch (e){
+        return {
+            error:e
+        }
     }
 }
 
-const getUsersInRoom = async (room) =>{
-    room = room.trim().toLowerCase()
-    const redisList = await client.lrangeAsync('Users',0,-1);
-    const userList = redisList.map(toJSON);
-    const sameRoom = userList.filter((user)=>{
-        return user.room === room
-    })
-    return sameRoom
+const removeUser = async (id) =>{
+    try{
+        const user = await client.delAsync(`User:${id}`);
+        if(user < 0){
+            return {
+                error: "Cannot find that user!"
+            }
+        }
+    }catch (e){
+        return {
+            error:e
+        }
+    }
+
 }
 
+
+const getUsersInRoom = async (room) =>{
+    try{
+        const users = await client.KEYSAsync('*')
+        const valueList = await getValueOfKeys(users)
+        const sameRoom = valueList.filter((user)=>{
+            return user.room === room
+        })
+        return sameRoom
+
+    }catch (e){
+        return {
+            error:e
+        }
+    }
+}
 
 module.exports = {
     addUser,

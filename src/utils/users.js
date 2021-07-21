@@ -2,10 +2,7 @@ const redis = require('redis');
 const { promisifyAll } = require('bluebird');
 
 promisifyAll(redis);
-const client = redis.createClient({
-    port      : 6379,
-    host      : 'redis'
-});
+const client = redis.createClient();
 
 const toJSON = (obj) =>{
     return JSON.parse(obj)

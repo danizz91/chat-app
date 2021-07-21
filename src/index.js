@@ -5,8 +5,7 @@ const socketio = require('socket.io');
 const Filter = require('bad-words');
 const {generateMessage,generateLocationMessage} = require('./utils/messages')
 const {addUser,removeUser,getUser,getUsersInRoom} = require("./utils/users")
-const {createMessage,getAllMessage} = require('./utils/room');
-const {writeLog} = require('./utils/generateLog');
+const {createMessage,getAllMessage,writeLog} = require('./utils/room');
 
 const app = express();
 app.use(express.json());
@@ -20,8 +19,6 @@ const port = process.env.PORT || 3000;
 const publicDirectoryPath = path.join(__dirname,'../public');
 
 app.use(express.static(publicDirectoryPath));
-
-// Write log every 1 minute!
 
 
 io.on('connection',(socket)=>{
@@ -65,7 +62,6 @@ io.on('connection',(socket)=>{
             const message = generateMessage(user.username,data.message,data.updateStatus)
             io.to(user.room).emit('message',message)
             await createMessage(user.id,message,user.room)
-
         }catch (e){
             return e
         }

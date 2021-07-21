@@ -1,15 +1,16 @@
 const redis = require('redis');
 const { promisifyAll } = require('bluebird');
+const moment = require('moment')
+const log = require('noogger');
 const { v4: uuidv4 } = require('uuid');
-const amqp = require('amqplib/callback_api');
+const open = require('amqplib').connect('amqp://localhost');
 
 promisifyAll(redis);
 
+const queue = 'messageQueue';
 
-const client = redis.createClient({
-    port      : 6379,
-    host      : 'redis'
-});
+
+const client = redis.createClient();
 
 const getValueOfKeys = async (users) =>{
     const usersJSON = []
@@ -24,22 +25,32 @@ const createMessage = async (user_id,msgObj,room) =>{
     const key = `room:${room}:${user_id}:${uuidv4()}`
     await client.setAsync(key,JSON.stringify(msgObj))
 
-    amqp.connect('amqp://rabbitmq:5672',(err,conn)=>{
-        if(err){
-            return console.log("Cannot connect RabbitMq")
-        }
-        conn.createChannel((err,ch)=>{
-            let queue = 'messageQueue';
-            ch.assertQueue(queue,{durable:false})
-            ch.sendToQueue(queue, Buffer.from(JSON.stringify(msgObj)))
-            console.log('Message was sent to queue!');
-        })
-        setTimeout(()=>{
-            conn.close();
-        },500)
-    })
-    // Send to rabbit mq also!
+    open.then(function(conn) {
+        return conn.createChannel();
+    }).then(function(ch) {
+        return ch.assertQueue(queue).then(function(ok) {
+            return ch.sendToQueue(queue, Buffer.from(JSON.stringify(msgObj)));
+        });
+    }).catch(console.warn);
 }
+
+const writeLog = async ()=> {
+    open.then(function(conn) {
+        return conn.createChannel();
+    }).then(function(ch) {
+        return ch.assertQueue(queue).then(function(ok) {
+            return ch.consume(queue, function(message) {
+                if (message !== null) {
+                    const msgContent = JSON.parse(message.content.toString('utf8'))
+                    const writeString = `[${moment(msgContent.createdAt).format('k:mm')}] ${msgContent.username}:${msgContent.text}`
+                    log.notice(writeString)
+                    ch.ack(message);
+                }
+            });
+        });
+    }).catch(console.warn);
+}
+
 
 const getAllMessage = async (room) =>{
     const key = `room:${room}:*`
@@ -50,5 +61,6 @@ const getAllMessage = async (room) =>{
 
 module.exports = {
     createMessage,
-    getAllMessage
+    getAllMessage,
+    writeLog
 }
